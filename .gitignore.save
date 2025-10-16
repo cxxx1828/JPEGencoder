@@ -1,0 +1,24 @@
+# Build directories
+build/
+build-*/
+
+# Compiled files
+*.o
+*.so
+*.a
+lib/*.so
+lib/*.a
+
+# Qt Creator files
+*.pro.user
+*.pro.user.*
+*.autosave
+
+# IDE files
+.vscode/
+.idea/
+
+# Executables
+*.exe
+
+
