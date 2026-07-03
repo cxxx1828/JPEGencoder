@@ -15,7 +15,6 @@ void imageProcessingFun(const QString& progName, QImage& outImgs, const QImage& 
     int origHeight = inImgs.height();
     qDebug() << "originalne dimenzije:" << origWidth << "x" << origHeight;
 
-    //priprema sliku i YUV bafer pre poziva enkodera
     int paddedWidth  = (origWidth  + 15) / 16 * 16;
     int paddedHeight = (origHeight + 15) / 16 * 16;
     qDebug() << "prosirene dimenzije:" << paddedWidth << "x" << paddedHeight;
@@ -38,7 +37,6 @@ void imageProcessingFun(const QString& progName, QImage& outImgs, const QImage& 
     if(progName == "JPEG Encoder")
     {
 
-        //performJPEGEncoding takodje radi proveru/padding, ali sa detaljnijom obradom ivica i DCT blokovima
         qDebug() << "pokrecem jpeg enkoder sa kvalitetom:" << params[0];
         performJPEGEncoding(Y, U, V, paddedWidth, paddedHeight, params[0]);
         qDebug() << "jpeg enkodovanje gotovo, napravljeno example.jpg";
