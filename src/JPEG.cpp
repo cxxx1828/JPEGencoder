@@ -65,21 +65,17 @@ void DCTUandV(const char input[], int16_t output[], int N, double* DCTKernel)
 uint8_t quantQuality(uint8_t quant, uint8_t quality)
 {
 
-    // osiguram validan opseg
     if (quality < 1) quality = 1;
     if (quality > 100) quality = 100;
 
-    //male vrednosti quality → snazna kvantizacija
-    //velike vrednosti → blaga kvantizacija
     int q;
     if(quality < 50)
         q = 5000 / quality;
     else
         q = 200 - quality * 2;
 
-    int result = (quant * q + 50) / 100;// +50 integer trik za zaokruzivanje na najblizi ceo broj
-
-    //clampujemo u opseg [1,255]
+    int result = (quant * q + 50) / 100;
+ 
     if(result < 1) result = 1;
     if(result > 255) result = 255;
 
@@ -111,7 +107,6 @@ void ZigZag(int16_t block[], uint8_t quantBlock[], int N, int flag)
     }
 
 
-    //zigzag za kvantizacione tabele
     if (flag == 1) {
         uint8_t temp[64];
         for (int i = 0; i < 64; i++) {
@@ -123,11 +118,6 @@ void ZigZag(int16_t block[], uint8_t quantBlock[], int N, int flag)
     }
 }
 
-// /* perform DCT */
-// imageProperties performDCT(char input[], int xSize, int ySize, int N, uint8_t quality, bool quantType)
-// {
-//     // TO DO
-// }
 
 
 void performJPEGEncoding(uchar* YPlane, char* UPlane, char* VPlane, int width, int height, int quality)
@@ -137,7 +127,6 @@ void performJPEGEncoding(uchar* YPlane, char* UPlane, char* VPlane, int width, i
     DEBUG(quality);
 
 
-    //kreiranje i priprema jpeg-a
     const int blockSize = 8;
 
     qDebug() << "kreiram JPEGBitStreamWriter...";
@@ -146,7 +135,6 @@ void performJPEGEncoding(uchar* YPlane, char* UPlane, char* VPlane, int width, i
     qDebug() << "header napisan";
 
 
-    //kvantizacija, tj. formiranje kvantizacionih tabela na osnovu quality
     uint8_t lumTable[64], chromTable[64];
     for(int i = 0; i < 64; i++){
         lumTable[i] = quantQuality(QuantLuminance[i], quality);
@@ -159,27 +147,20 @@ void performJPEGEncoding(uchar* YPlane, char* UPlane, char* VPlane, int width, i
     qDebug() << "primer lumTable[0] =" << lumTable[0];
     qDebug() << "primer chromTable[0] =" << chromTable[0];
 
-    //ovde pisem u fajl kvantizacione tabele, dimenzije slike i huffman tables
-    //to je jpeg header strukture koji opisuje kako ce se enkodirati podaci
+
     writer->writeQuantizationTables(lumTable, chromTable);
     writer->writeImageInfo(width, height);
     writer->writeHuffmanTables();
     qDebug() << "kvantizacija, info i huffman tabele napisane";
 
 
-    //level shift aka pomak vrednosti Y kanala za 128
-    //jpeg standard zahteva da se pikseli pre DCT transformacije pomere tako da im opseg bude oko nule
-    //0–255 → -128 do 127.
     char* Yshifted = new char[width * height];
     for(int i = 0; i < width * height; i++)
         Yshifted[i] = static_cast<char>(YPlane[i] - 128);
 
     qDebug() << "Y kanal level-shiftovan, primer Yshifted[0] =" << (int)Yshifted[0];
 
-    // U i V kanali se obično ne pomeraju jer su već centrirani oko 0, tj -127 - 128 nakon YUV konverzije
-
-    //ovde su jos originalne vrednosti
-    //(4:2:0)
+   
     int paddedYWidth = width;
     int paddedYHeight = height;
     int paddedUWidth = width / 2;
@@ -192,7 +173,6 @@ void performJPEGEncoding(uchar* YPlane, char* UPlane, char* VPlane, int width, i
     char* VData = VPlane;
 
 
-    //namestam da slika bude deljiva sa 8 tj 16 jer jpeg deli sliku u blokove od 8x8 piksela
     if(width % 16 != 0 || height % 16 != 0){
         qDebug() << "prosirujem granice za 16-blokove...";
         extendBorders(Yshifted, width, height, blockSize, &YData, &paddedYWidth, &paddedYHeight);
@@ -202,7 +182,6 @@ void performJPEGEncoding(uchar* YPlane, char* UPlane, char* VPlane, int width, i
     }
 
 
-    //generisanje DCT matrice
     double* dctMatrix = new double[64];
     GenerateDCTmatrix(dctMatrix, blockSize);
     qDebug() << "DCT matrica generisana";
@@ -210,31 +189,27 @@ void performJPEGEncoding(uchar* YPlane, char* UPlane, char* VPlane, int width, i
     char blockY[64], blockU[64], blockV[64];
     short dctY[64], dctU[64], dctV[64];
 
-    //obrada svakog 16×16 makrobloka (4:2:0 subsampling)
-    //jpeg standard koristi blokove od 16x16 piksela(4 8x8 Y bloka i po jedan 8x8 blok za U i V)
     for(int y = 0; y < paddedYHeight; y += 16){
         for(int x = 0; x < paddedYWidth; x += 16){
 
 
-            //za Y blokove
             for(int by = 0; by < 2; by++){
                 for(int bx = 0; bx < 2; bx++){
                     for(int i = 0; i < blockSize; i++){
                         for(int j = 0; j < blockSize; j++){
-                            blockY[i * blockSize + j] = YData[(y + by*8 + i)*paddedYWidth + (x + bx*8 + j)];//kopira se iz slike u lokalni blok
+                            blockY[i * blockSize + j] = YData[(y + by*8 + i)*paddedYWidth + (x + bx*8 + j)];
                         }
                     }
-                    DCTUandV(blockY, dctY, blockSize, dctMatrix);//DCT
+                    DCTUandV(blockY, dctY, blockSize, dctMatrix);
                     for(int k = 0; k < 64; k++)
-                        dctY[k] = round((double)dctY[k] / lumTable[k]);//podeli se sa kvantizacionom vrednoscu
-                    ZigZag(dctY, nullptr, blockSize, 0); //zigzag
-                    writer->writeBlockY(dctY);//upise se u fajl
+                        dctY[k] = round((double)dctY[k] / lumTable[k]);
+                    ZigZag(dctY, nullptr, blockSize, 0); 
+                    writer->writeBlockY(dctY);
                 }
             }
 
 
-            //za U i V blokove
-            //postupak isti samo druga kvantizaciona tabela(Chrominance)
+         
             for(int i = 0; i < blockSize; i++){
                 for(int j = 0; j < blockSize; j++){
                     blockU[i * blockSize + j] = UData[(y/2 + i)*paddedUWidth + (x/2 + j)];
@@ -262,7 +237,6 @@ void performJPEGEncoding(uchar* YPlane, char* UPlane, char* VPlane, int width, i
     }
 
 
-    //zatvaranje fajla, ciscenje memorije
     writer->finishStream();
     qDebug() << "zavrseno pisanje jpeg fajla";
 
