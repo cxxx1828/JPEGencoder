@@ -1,8 +1,5 @@
 #include "ColorSpaces.h"
 
-/********************************************************************************************************************************/
-/* RGB processing */
-/********************************************************************************************************************************/
 void processing_RGB(const uchar rgbInputImg[], int x, int y, uchar rgbOutputImg[], double R, double G, double B)
 {
 	for(int i = 0; i< x; i++)
@@ -16,9 +13,7 @@ void processing_RGB(const uchar rgbInputImg[], int x, int y, uchar rgbOutputImg[
 	}
 }
 
-/********************************************************************************************************************************/
-/* YUV444 processing */
-/********************************************************************************************************************************/
+
 void RGBtoYUV444(const uchar rgbImg[], int x, int y, uchar Y_buff[], char U_buff[], char V_buff[]) 
 {
 	uchar R, G, B;
@@ -89,9 +84,7 @@ void procesing_YUV444(uchar Y_buff[], char U_buff[], char V_buff[], int x, int y
 
 }
 
-/*******************************************************************************************************************************/
-/* YUV422 processing */
-/********************************************************************************************************************************/
+
 void RGBtoYUV422(const uchar rgbImg[], int x, int y, uchar Y_buff[], char U_buff[], char V_buff[]) 
 {
 	uchar R, G, B;
@@ -193,9 +186,6 @@ void procesing_YUV422(uchar Y_buff[], char U_buff[], char V_buff[], int x, int y
 
 }
 
-/*******************************************************************************************************************************/
-/* YUV420 processing */
-/*******************************************************************************************************************************/
 void RGBtoYUV420(const uchar rgbImg[], int x, int y, uchar Y_buff[], char U_buff[], char V_buff[])
 {
     uchar R, G, B;
@@ -342,26 +332,23 @@ void YUV420toRGB(const uchar Y_buff[], const char U_buff[], const char V_buff[],
 
 void procesing_YUV420(uchar Y_buff[], char U_buff[], char V_buff[], int x, int y, double Y, double U, double V)
 {
-    //skaliranje yuv komponenti/ mnozenje sa faktorima
-    for(int i = 0; i < x; i += 2){ // i je po redovima
-        for(int j = 0; j < y; j += 2){ //j je po kolonama
+    for(int i = 0; i < x; i += 2){ 
+        for(int j = 0; j < y; j += 2){ 
 
 
-            Y_buff[j*x + i] *= Y;    // gornji levi Y
-            Y_buff[j*x + (i+1)] *= Y;// gornji desni Y
-            Y_buff[(j+1)*x + i] *= Y;// donji levi Y
-            Y_buff[(j+1)*x + (i+1)] *= Y;// donji desni Y
+            Y_buff[j*x + i] *= Y;    
+            Y_buff[j*x + (i+1)] *= Y;
+            Y_buff[(j+1)*x + i] *= Y;
+            Y_buff[(j+1)*x + (i+1)] *= Y;
 
-            //jedan U i V za ceo blok 2x2
+            
             U_buff[(j/2)*(x/2) + (i/2)] *= U;
             V_buff[(j/2)*(x/2) + (i/2)] *= V;
         }
     }
 }
 
-/*******************************************************************************************************************************/
-/* Y decimation */
-/*******************************************************************************************************************************/
+
 void decimate_Y(uchar Y_buff[], int x, int y)
 {
     uchar YY;
@@ -372,7 +359,7 @@ void decimate_Y(uchar Y_buff[], int x, int y)
             YY = ((int)Y_buff[j*x + i] +
                   Y_buff[j*x + (i+1)] +
                   Y_buff[(j+1)*x + i] +
-                  Y_buff[(j+1)*x + (i+1)]) >> 2;  // deli sa 4
+                  Y_buff[(j+1)*x + (i+1)]) >> 2;  
 
 
             Y_buff[j*x + i] = YY;
